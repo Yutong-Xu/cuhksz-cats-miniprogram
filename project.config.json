@@ -2,7 +2,7 @@
   "miniprogramRoot": "./",
   "projectname": "cuhksz-cats",
   "description": "CUHK(SZ) 猫猫图鉴",
-  "appid": "touristappid",
+  "appid": "wxbce13cfe987abe07",
   "setting": {
     "urlCheck": true,
     "es6": true,
