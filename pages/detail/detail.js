@@ -3,10 +3,12 @@ const db = wx.cloud.database();
 const { compressImages } = require('../../utils/compress.js');
 
 const STATUS_TEXT = {
-  current: '校内',
-  historical: '历史',
-  adoption: '待领养',
+  current:   '校内',
+  adoption:  '待领养',
   fostering: '寄养/医治',
+  adopted:   '已领养',
+  missing:   '已失踪',
+  deceased:  '已去世',
 };
 
 const FIELD_CONFIG = {
@@ -22,10 +24,12 @@ const FIELD_CONFIG = {
   ]},
   location:    { label: '位置',     type: 'text',     placeholder: '例:下园食堂附近' },
   status:      { label: '类别',     type: 'radio',    options: [
-    { value: 'current',    label: '校内' },
-    { value: 'historical', label: '历史' },
-    { value: 'adoption',   label: '待领养' },
-    { value: 'fostering',  label: '寄养/医治' },
+    { value: 'current',   label: '校内' },
+    { value: 'adoption',  label: '待领养' },
+    { value: 'fostering', label: '寄养/医治' },
+    { value: 'adopted',   label: '已领养' },
+    { value: 'missing',   label: '已失踪' },
+    { value: 'deceased',  label: '已去世' },
   ]},
   personality: { label: '性格',     type: 'textarea', placeholder: '描述一下它的性格...' },
   description: { label: '故事',     type: 'textarea', placeholder: '它的故事...' },
@@ -36,16 +40,14 @@ Page({
     cat: {},
     statusText: '',
 
-    // 字段编辑弹窗
     editing: {
       visible: false, field: '', label: '', type: '',
       placeholder: '', options: [], value: '',
     },
 
-    // 照片管理弹窗
     photoManager: {
       visible: false,
-      items: [],  // { key, url, isNew, pendingDelete, localPath? }
+      items: [],
     },
     remainingSlots: 9,
   },
@@ -206,7 +208,6 @@ Page({
 
     wx.showLoading({ title: '保存中', mask: true });
     try {
-      // 1. 压缩 + 上传新照片
       let uploadedIds = [];
       if (toUpload.length) {
         const compressedPaths = await compressImages(toUpload.map(i => i.localPath));
@@ -219,13 +220,11 @@ Page({
         uploadedIds = results.map(r => r.fileID);
       }
 
-      // 2. 更新数据库
       const newPhotos = [...kept, ...uploadedIds];
       await db.collection('cats').doc(this.catId).update({
         data: { photos: newPhotos },
       });
 
-      // 3. 清理云存储(失败不阻塞)
       if (toDelete.length) {
         wx.cloud.deleteFile({ fileList: toDelete }).catch(err => {
           console.warn('云存储删除失败:', err);
@@ -267,10 +266,8 @@ Page({
         f => typeof f === 'string' && f.startsWith('cloud://')
       );
 
-      // 1. 删猫咪记录
       await db.collection('cats').doc(this.catId).remove();
 
-      // 2. 清理云存储(失败不阻塞)
       if (cloudFiles.length) {
         wx.cloud.deleteFile({ fileList: cloudFiles }).catch(err => {
           console.warn('云存储清理失败:', err);
@@ -287,7 +284,6 @@ Page({
     }
   },
 
-  // ========== 照片预览 ==========
   previewPhoto(e) {
     const url = e.currentTarget.dataset.url;
     wx.previewImage({ current: url, urls: this.data.cat.photos || [url] });

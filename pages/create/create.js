@@ -4,7 +4,7 @@ const { compressImages } = require('../../utils/compress.js');
 
 Page({
   data: {
-    photos: [],       // 本地临时路径
+    photos: [],
     name: '',
     gender: 'unknown',
     status: 'current',
@@ -20,10 +20,12 @@ Page({
       { value: 'unknown', label: '? 未知' },
     ],
     statusOptions: [
-      { value: 'current',    label: '校内' },
-      { value: 'historical', label: '历史' },
-      { value: 'adoption',   label: '待领养' },
-      { value: 'fostering',  label: '寄养/医治' },
+      { value: 'current',   label: '校内' },
+      { value: 'adoption',  label: '待领养' },
+      { value: 'fostering', label: '寄养/医治' },
+      { value: 'adopted',   label: '已领养' },
+      { value: 'missing',   label: '已失踪' },
+      { value: 'deceased',  label: '已去世' },
     ],
   },
 
@@ -92,8 +94,6 @@ Page({
     wx.showLoading({ title: '上传中', mask: true });
 
     try {
-      
-      // 先批量压缩,再上传
       const compressedPaths = await compressImages(photos);
       const uploads = compressedPaths.map(path =>
         wx.cloud.uploadFile({
@@ -104,7 +104,6 @@ Page({
       const results = await Promise.all(uploads);
       const photoIds = results.map(r => r.fileID);
 
-      // 写入数据库
       await db.collection('cats').add({
         data: {
           name: name.trim(),

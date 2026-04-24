@@ -56,10 +56,12 @@
 .card:active {
   transform: scale(0.97);
 }
-.card-current { background: linear-gradient(135deg, #FFF8E1, #FFECB3); }
-.card-history { background: linear-gradient(135deg, #E8EAF6, #C5CAE9); }
+.card-current  { background: linear-gradient(135deg, #FFF8E1, #FFECB3); }
 .card-adoption { background: linear-gradient(135deg, #E0F7FA, #B2EBF2); }
-.card-foster { background: linear-gradient(135deg, #FCE4EC, #F8BBD0); }
+.card-foster   { background: linear-gradient(135deg, #FCE4EC, #F8BBD0); }
+.card-adopted  { background: linear-gradient(135deg, #E8F5E9, #A5D6A7); }
+.card-missing  { background: linear-gradient(135deg, #EDE7F6, #B39DDB); }
+.card-deceased { background: linear-gradient(135deg, #ECEFF1, #B0BEC5); }
 
 .emoji {
   font-size: 64rpx;

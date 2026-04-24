@@ -65,10 +65,12 @@
   font-size: 22rpx;
   color: #888;
 }
-.meta.status-current { color: #F57C00; }
-.meta.status-historical { color: #3949AB; }
-.meta.status-adoption { color: #00897B; }
+.meta.status-current   { color: #F57C00; }
+.meta.status-adoption  { color: #00897B; }
 .meta.status-fostering { color: #C2185B; }
+.meta.status-adopted   { color: #2E7D32; }
+.meta.status-missing   { color: #5E35B1; }
+.meta.status-deceased  { color: #546E7A; }
 
 .empty {
   margin-top: 160rpx;

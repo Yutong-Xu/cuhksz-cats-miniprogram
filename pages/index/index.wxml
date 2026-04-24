@@ -18,12 +18,6 @@
       <view class="card-desc">目前在校园里的猫</view>
     </view>
 
-    <view class="card card-history" bindtap="goToList" data-status="historical" data-title="历史猫猫">
-      <view class="emoji">📖</view>
-      <view class="card-title">历史猫猫</view>
-      <view class="card-desc">曾经出现过的毛孩子</view>
-    </view>
-
     <view class="card card-adoption" bindtap="goToList" data-status="adoption" data-title="待领养猫猫">
       <view class="emoji">🏠</view>
       <view class="card-title">待领养</view>
@@ -34,6 +28,24 @@
       <view class="emoji">🏥</view>
       <view class="card-title">寄养/医治</view>
       <view class="card-desc">正在室内照护</view>
+    </view>
+
+    <view class="card card-adopted" bindtap="goToList" data-status="adopted" data-title="已领养的猫">
+      <view class="emoji">💚</view>
+      <view class="card-title">已领养</view>
+      <view class="card-desc">已有幸福新家</view>
+    </view>
+
+    <view class="card card-missing" bindtap="goToList" data-status="missing" data-title="已失踪的猫">
+      <view class="emoji">🔍</view>
+      <view class="card-title">已失踪</view>
+      <view class="card-desc">近期未见踪影</view>
+    </view>
+
+    <view class="card card-deceased" bindtap="goToList" data-status="deceased" data-title="已去世的猫">
+      <view class="emoji">🌸</view>
+      <view class="card-title">已去世</view>
+      <view class="card-desc">永远怀念</view>
     </view>
   </view>
 

@@ -8,10 +8,12 @@ Page({
     cats: [],
     searched: false,
     statusLabels: {
-      current: '校内',
-      historical: '历史',
-      adoption: '待领养',
+      current:   '校内',
+      adoption:  '待领养',
       fostering: '寄养/医治',
+      adopted:   '已领养',
+      missing:   '已失踪',
+      deceased:  '已去世',
     },
   },
 
@@ -29,11 +31,9 @@ Page({
 
     wx.showLoading({ title: '搜索中' });
     try {
-      // 转义正则特殊字符,避免用户输入的 . * 等被当成元字符
       const safe = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const reg = db.RegExp({ regexp: safe, options: 'i' });
 
-      // 多字段 OR 匹配
       const res = await db.collection('cats')
         .where(_.or([
           { name: reg },
