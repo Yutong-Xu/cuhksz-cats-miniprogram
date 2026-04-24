@@ -1,5 +1,6 @@
 // pages/detail/detail.js
 const db = wx.cloud.database();
+const _ = db.command;
 
 const STATUS_TEXT = {
   current: '校内',
@@ -8,7 +9,6 @@ const STATUS_TEXT = {
   fostering: '寄养/医治',
 };
 
-// 每个字段的编辑配置
 const FIELD_CONFIG = {
   name:        { label: '名字',     type: 'text',     placeholder: '给它起个名字' },
   gender:      { label: '性别',     type: 'radio',    options: [
@@ -40,16 +40,17 @@ Page({
     tempImages: [],
     canSend: false,
 
-    // 编辑弹窗状态
     editing: {
-      visible: false,
-      field: '',
-      label: '',
-      type: '',
-      placeholder: '',
-      options: [],
-      value: '',
+      visible: false, field: '', label: '', type: '',
+      placeholder: '', options: [], value: '',
     },
+
+    // 照片管理
+    photoManager: {
+      visible: false,
+      items: [],  // { key, url, isNew, pendingDelete, localPath? }
+    },
+    remainingSlots: 9,
   },
 
   onLoad(options) {
@@ -95,7 +96,7 @@ Page({
     }
   },
 
-  // ========== 编辑弹窗 ==========
+  // ========== 字段编辑 ==========
   editField(e) {
     const field = e.currentTarget.dataset.field;
     const config = FIELD_CONFIG[field];
@@ -129,7 +130,6 @@ Page({
   async saveEdit() {
     const { field, value, type } = this.data.editing;
 
-    // 文本字段校验
     if (type === 'text' && typeof value === 'string' && !value.trim()) {
       wx.showToast({ title: '不能为空', icon: 'none' });
       return;
@@ -155,6 +155,171 @@ Page({
       console.error(err);
       wx.hideLoading();
       wx.showToast({ title: '保存失败', icon: 'none' });
+    }
+  },
+
+  // ========== 照片管理 ==========
+  openPhotoManager() {
+    const items = (this.data.cat.photos || []).map((url, i) => ({
+      key: `existing_${i}`,
+      url,                  // 云存储 fileID 或 URL
+      isNew: false,
+      pendingDelete: false,
+    }));
+    this.setData({
+      'photoManager.visible': true,
+      'photoManager.items': items,
+      remainingSlots: 9 - items.filter(x => !x.pendingDelete).length,
+    });
+  },
+
+  closePhotoManager() {
+    this.setData({ 'photoManager.visible': false });
+  },
+
+  togglePhotoDelete(e) {
+    const key = e.currentTarget.dataset.key;
+    const items = this.data.photoManager.items.map(item => {
+      if (item.key !== key) return item;
+      // 新添加的照片 → 直接移除
+      if (item.isNew) return null;
+      // 已存在的照片 → 切换 pendingDelete 标记
+      return { ...item, pendingDelete: !item.pendingDelete };
+    }).filter(Boolean);
+
+    this.setData({
+      'photoManager.items': items,
+      remainingSlots: 9 - items.filter(x => !x.pendingDelete).length,
+    });
+  },
+
+  addPhotosInManager() {
+    const remaining = this.data.remainingSlots;
+    if (remaining <= 0) return;
+    wx.chooseMedia({
+      count: remaining,
+      mediaType: ['image'],
+      sourceType: ['album', 'camera'],
+      sizeType: ['compressed'],
+      success: res => {
+        const newItems = res.tempFiles.map((f, i) => ({
+          key: `new_${Date.now()}_${i}`,
+          url: f.tempFilePath,
+          localPath: f.tempFilePath,
+          isNew: true,
+          pendingDelete: false,
+        }));
+        const items = [...this.data.photoManager.items, ...newItems];
+        this.setData({
+          'photoManager.items': items,
+          remainingSlots: 9 - items.filter(x => !x.pendingDelete).length,
+        });
+      },
+    });
+  },
+
+  async savePhotoChanges() {
+    const items = this.data.photoManager.items;
+    const toDelete = items.filter(x => !x.isNew && x.pendingDelete).map(x => x.url);
+    const toUpload = items.filter(x => x.isNew);
+    const kept = items.filter(x => !x.isNew && !x.pendingDelete).map(x => x.url);
+
+    if (kept.length + toUpload.length === 0) {
+      wx.showToast({ title: '至少保留一张照片', icon: 'none' });
+      return;
+    }
+
+    wx.showLoading({ title: '保存中', mask: true });
+    try {
+      // 1. 上传新照片
+      let uploadedIds = [];
+      if (toUpload.length) {
+        const results = await Promise.all(toUpload.map(item =>
+          wx.cloud.uploadFile({
+            cloudPath: `cats/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`,
+            filePath: item.localPath,
+          })
+        ));
+        uploadedIds = results.map(r => r.fileID);
+      }
+
+      // 2. 更新数据库(先更数据库,确保云存储删除失败时数据状态一致)
+      const newPhotos = [...kept, ...uploadedIds];
+      await db.collection('cats').doc(this.catId).update({
+        data: { photos: newPhotos },
+      });
+
+      // 3. 从云存储删除被移除的照片(失败不阻塞)
+      if (toDelete.length) {
+        wx.cloud.deleteFile({ fileList: toDelete }).catch(err => {
+          console.warn('云存储删除失败(不影响功能):', err);
+        });
+      }
+
+      this.setData({
+        'cat.photos': newPhotos,
+        'photoManager.visible': false,
+      });
+      wx.hideLoading();
+      wx.showToast({ title: '已保存', icon: 'success' });
+    } catch (err) {
+      console.error(err);
+      wx.hideLoading();
+      wx.showToast({ title: '保存失败', icon: 'none' });
+    }
+  },
+
+  // ========== 删除猫咪 ==========
+  deleteCat() {
+    wx.showModal({
+      title: '确认删除',
+      content: `确定要删除「${this.data.cat.name}」吗?此操作不可恢复,评论和照片会一并删除。`,
+      confirmText: '删除',
+      confirmColor: '#E53935',
+      success: async (modalRes) => {
+        if (!modalRes.confirm) return;
+        await this.doDeleteCat();
+      },
+    });
+  },
+
+  async doDeleteCat() {
+    wx.showLoading({ title: '删除中', mask: true });
+    try {
+      // 收集所有要删除的云存储文件
+      const filesToDelete = [...(this.data.cat.photos || [])];
+      this.data.comments.forEach(c => {
+        if (c.images && c.images.length) filesToDelete.push(...c.images);
+      });
+      // 只保留 cloud:// 开头的(兼容外链 URL)
+      const cloudFiles = filesToDelete.filter(f => typeof f === 'string' && f.startsWith('cloud://'));
+
+      // 1. 删除评论
+      if (this.data.comments.length) {
+        // 客户端的 remove 受权限限制,需要一条条删。如果量大应该用云函数。
+        // 这里直接批量 remove 按 catId 过滤
+        await db.collection('comments').where({ catId: this.catId }).remove().catch(err => {
+          console.warn('批量删除评论失败,可能无权限。错误:', err);
+        });
+      }
+
+      // 2. 删除猫咪记录
+      await db.collection('cats').doc(this.catId).remove();
+
+      // 3. 删除云存储文件(失败不阻塞)
+      if (cloudFiles.length) {
+        wx.cloud.deleteFile({ fileList: cloudFiles }).catch(err => {
+          console.warn('云存储清理失败(不影响功能):', err);
+        });
+      }
+
+      wx.hideLoading();
+      wx.showToast({ title: '已删除', icon: 'success' });
+      setTimeout(() => wx.navigateBack(), 800);
+    } catch (err) {
+      console.error(err);
+      wx.hideLoading();
+      wx.showToast({ title: '删除失败', icon: 'none' });
     }
   },
 
@@ -227,7 +392,7 @@ Page({
       try {
         const profile = await wx.getUserProfile({ desc: '用于评论展示' });
         userInfo = profile.userInfo || {};
-      } catch (_) { /* 拒绝则匿名 */ }
+      } catch (_) {}
 
       await db.collection('comments').add({
         data: {

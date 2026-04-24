@@ -1,13 +1,16 @@
 <!--pages/detail/detail.wxml-->
 <view class="container">
   <!-- 照片 swiper -->
-  <swiper class="photos" indicator-dots="{{cat.photos.length > 1}}" autoplay="{{false}}" circular>
-    <block wx:if="{{cat.photos.length}}">
-      <swiper-item wx:for="{{cat.photos}}" wx:key="*this">
-        <image class="photo" src="{{item}}" mode="aspectFill" bindtap="previewPhoto" data-url="{{item}}"/>
-      </swiper-item>
-    </block>
-  </swiper>
+  <view class="photo-wrap">
+    <swiper class="photos" indicator-dots="{{cat.photos.length > 1}}" autoplay="{{false}}" circular>
+      <block wx:if="{{cat.photos.length}}">
+        <swiper-item wx:for="{{cat.photos}}" wx:key="*this">
+          <image class="photo" src="{{item}}" mode="aspectFill" bindtap="previewPhoto" data-url="{{item}}"/>
+        </swiper-item>
+      </block>
+    </swiper>
+    <view class="manage-photo-btn" bindtap="openPhotoManager">管理照片 ✎</view>
+  </view>
 
   <!-- 基本信息 -->
   <view class="card">
@@ -78,6 +81,11 @@
     </view>
   </view>
 
+  <!-- 删除猫咪按钮 -->
+  <view class="danger-zone">
+    <text class="delete-link" bindtap="deleteCat">删除这只猫 🗑️</text>
+  </view>
+
   <view style="height: 180rpx"></view>
 
   <!-- 评论输入栏 -->
@@ -101,12 +109,11 @@
     </view>
   </view>
 
-  <!-- 编辑弹窗 -->
+  <!-- 字段编辑弹窗 -->
   <view class="modal-mask" wx:if="{{editing.visible}}" bindtap="closeEdit"></view>
   <view class="modal" wx:if="{{editing.visible}}">
     <view class="modal-title">编辑 {{editing.label}}</view>
 
-    <!-- 文本输入 -->
     <input
       wx:if="{{editing.type === 'text'}}"
       class="modal-input"
@@ -115,7 +122,6 @@
       bindinput="onEditInput"
       focus="{{true}}"/>
 
-    <!-- 多行输入 -->
     <textarea
       wx:if="{{editing.type === 'textarea'}}"
       class="modal-textarea"
@@ -124,7 +130,6 @@
       bindinput="onEditInput"
       auto-focus="{{true}}"/>
 
-    <!-- 选项 -->
     <view wx:if="{{editing.type === 'radio'}}" class="modal-options">
       <view
         wx:for="{{editing.options}}" wx:key="value"
@@ -137,6 +142,35 @@
     <view class="modal-actions">
       <view class="btn btn-cancel" bindtap="closeEdit">取消</view>
       <view class="btn btn-save" bindtap="saveEdit">保存</view>
+    </view>
+  </view>
+
+  <!-- 照片管理弹窗 -->
+  <view class="modal-mask" wx:if="{{photoManager.visible}}" bindtap="closePhotoManager"></view>
+  <view class="modal photo-modal" wx:if="{{photoManager.visible}}">
+    <view class="modal-title">管理照片</view>
+
+    <view class="photo-grid">
+      <view class="photo-slot" wx:for="{{photoManager.items}}" wx:key="key">
+        <image src="{{item.url}}" mode="aspectFill" class="{{item.pendingDelete ? 'faded' : ''}}"/>
+        <view class="photo-slot-badge" wx:if="{{item.isNew}}">新增</view>
+        <view class="photo-slot-badge delete" wx:if="{{item.pendingDelete}}">将删除</view>
+        <view class="photo-slot-action" catchtap="togglePhotoDelete" data-key="{{item.key}}">
+          {{item.pendingDelete ? '↶' : '×'}}
+        </view>
+      </view>
+
+      <view class="photo-slot add" bindtap="addPhotosInManager" wx:if="{{remainingSlots > 0}}">
+        <text class="plus">+</text>
+        <text class="tip">{{photoManager.items.length}}/9</text>
+      </view>
+    </view>
+
+    <view class="photo-hint">点 × 标记删除,再点一次撤销。保存后生效。</view>
+
+    <view class="modal-actions">
+      <view class="btn btn-cancel" bindtap="closePhotoManager">取消</view>
+      <view class="btn btn-save" bindtap="savePhotoChanges">保存</view>
     </view>
   </view>
 </view>

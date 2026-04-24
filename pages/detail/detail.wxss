@@ -3,10 +3,25 @@
   padding-bottom: 40rpx;
 }
 
+/* 照片区域 */
+.photo-wrap {
+  position: relative;
+}
 .photos, .photo {
   width: 100%;
   height: 600rpx;
   background: #eee;
+}
+.manage-photo-btn {
+  position: absolute;
+  right: 20rpx;
+  bottom: 20rpx;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  padding: 12rpx 24rpx;
+  border-radius: 30rpx;
+  font-size: 24rpx;
+  z-index: 2;
 }
 
 .card {
@@ -28,7 +43,6 @@
 .gender-female { color: #E91E63; font-size: 36rpx; }
 .gender-unknown { color: #999; font-size: 36rpx; }
 
-/* 画笔编辑图标 */
 .edit-icon {
   color: #BBB;
   font-size: 26rpx;
@@ -60,9 +74,7 @@
 .status-adoption { background: #E0F2F1; color: #00897B; }
 .status-fostering { background: #FCE4EC; color: #C2185B; }
 
-.section {
-  margin-top: 32rpx;
-}
+.section { margin-top: 32rpx; }
 .section-title {
   font-size: 28rpx;
   font-weight: 600;
@@ -78,7 +90,18 @@
   line-height: 1.6;
 }
 
-/* 评论(和之前一样) */
+/* 危险区域 */
+.danger-zone {
+  margin: 60rpx 20rpx 20rpx;
+  text-align: center;
+}
+.delete-link {
+  color: #E53935;
+  font-size: 26rpx;
+  padding: 16rpx 32rpx;
+}
+
+/* 评论 */
 .empty-comment {
   color: #999;
   font-size: 26rpx;
@@ -196,7 +219,7 @@
   color: #fff;
 }
 
-/* ======== 编辑弹窗 ======== */
+/* 编辑弹窗 */
 .modal-mask {
   position: fixed;
   inset: 0;
@@ -273,4 +296,82 @@
 .btn-save {
   background: linear-gradient(135deg, #FF9800, #FF6F00);
   color: #fff;
+}
+
+/* 照片管理弹窗 */
+.photo-modal {
+  left: 24rpx;
+  right: 24rpx;
+}
+.photo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+  margin-bottom: 20rpx;
+}
+.photo-slot {
+  position: relative;
+  width: 180rpx;
+  height: 180rpx;
+}
+.photo-slot image {
+  width: 100%;
+  height: 100%;
+  border-radius: 12rpx;
+  background: #eee;
+}
+.photo-slot image.faded {
+  opacity: 0.3;
+}
+.photo-slot-action {
+  position: absolute;
+  top: -10rpx;
+  right: -10rpx;
+  width: 44rpx;
+  height: 44rpx;
+  line-height: 40rpx;
+  text-align: center;
+  background: #000;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 32rpx;
+}
+.photo-slot-badge {
+  position: absolute;
+  bottom: 6rpx;
+  left: 6rpx;
+  background: #FF9800;
+  color: #fff;
+  font-size: 18rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 8rpx;
+}
+.photo-slot-badge.delete {
+  background: #E53935;
+}
+.photo-slot.add {
+  width: 180rpx;
+  height: 180rpx;
+  border: 2rpx dashed #ccc;
+  border-radius: 12rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+}
+.photo-slot.add .plus {
+  font-size: 60rpx;
+  font-weight: 200;
+  line-height: 1;
+}
+.photo-slot.add .tip {
+  font-size: 20rpx;
+  margin-top: 6rpx;
+}
+.photo-hint {
+  color: #999;
+  font-size: 22rpx;
+  margin-bottom: 20rpx;
+  line-height: 1.5;
 }
