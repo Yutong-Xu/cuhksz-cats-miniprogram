@@ -46,7 +46,7 @@
 
     <view class="section">
       <view class="section-title">
-        <text>故事</text>
+        <text>简介</text>
         <text class="edit-icon" bindtap="editField" data-field="description">✎</text>
       </view>
       <view class="section-content">{{cat.description || '(暂无)'}}</view>
