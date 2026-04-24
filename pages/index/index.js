@@ -6,4 +6,7 @@ Page({
       url: `/pages/list/list?status=${status}&title=${encodeURIComponent(title)}`,
     });
   },
+  goToSearch() {
+    wx.navigateTo({ url: '/pages/search/search' });
+  },
 });

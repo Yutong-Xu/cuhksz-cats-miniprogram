@@ -5,7 +5,7 @@
 }
 
 .header {
-  padding: 20rpx 0 40rpx;
+  padding: 20rpx 0 30rpx;
 }
 .title {
   font-size: 48rpx;
@@ -18,11 +18,29 @@
   font-size: 26rpx;
 }
 
+/* 搜索栏 */
+.search-bar {
+  background: #fff;
+  border-radius: 40rpx;
+  padding: 20rpx 32rpx;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 40rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.03);
+}
+.search-icon {
+  font-size: 28rpx;
+}
+.search-placeholder {
+  color: #aaa;
+  font-size: 26rpx;
+}
+
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24rpx;
-  margin-top: 20rpx;
 }
 .card {
   background: #fff;

@@ -1,12 +1,34 @@
 // pages/detail/detail.js
 const db = wx.cloud.database();
-const _ = db.command;
 
 const STATUS_TEXT = {
   current: '校内',
   historical: '历史',
   adoption: '待领养',
   fostering: '寄养/医治',
+};
+
+// 每个字段的编辑配置
+const FIELD_CONFIG = {
+  name:        { label: '名字',     type: 'text',     placeholder: '给它起个名字' },
+  gender:      { label: '性别',     type: 'radio',    options: [
+    { value: 'male', label: '♂ 公' },
+    { value: 'female', label: '♀ 母' },
+    { value: 'unknown', label: '? 未知' },
+  ]},
+  neutered:    { label: '绝育状态', type: 'radio',    options: [
+    { value: true,  label: '✓ 已绝育' },
+    { value: false, label: '✗ 未绝育' },
+  ]},
+  location:    { label: '位置',     type: 'text',     placeholder: '例:下园食堂附近' },
+  status:      { label: '类别',     type: 'radio',    options: [
+    { value: 'current',    label: '校内' },
+    { value: 'historical', label: '历史' },
+    { value: 'adoption',   label: '待领养' },
+    { value: 'fostering',  label: '寄养/医治' },
+  ]},
+  personality: { label: '性格',     type: 'textarea', placeholder: '描述一下它的性格...' },
+  description: { label: '故事',     type: 'textarea', placeholder: '它的故事...' },
 };
 
 Page({
@@ -17,6 +39,17 @@ Page({
     inputText: '',
     tempImages: [],
     canSend: false,
+
+    // 编辑弹窗状态
+    editing: {
+      visible: false,
+      field: '',
+      label: '',
+      type: '',
+      placeholder: '',
+      options: [],
+      value: '',
+    },
   },
 
   onLoad(options) {
@@ -37,10 +70,10 @@ Page({
         cat: res.data,
         statusText: STATUS_TEXT[res.data.status] || '',
       });
-      wx.setNavigationBarTitle({ title: res.data.name || '猫猫详情' });
+      wx.setNavigationBarTitle({ title: res.data.name || '猫咪详情' });
     } catch (err) {
       console.error(err);
-      wx.showToast({ title: '猫猫信息加载失败', icon: 'none' });
+      wx.showToast({ title: '加载失败', icon: 'none' });
     }
   },
 
@@ -62,6 +95,70 @@ Page({
     }
   },
 
+  // ========== 编辑弹窗 ==========
+  editField(e) {
+    const field = e.currentTarget.dataset.field;
+    const config = FIELD_CONFIG[field];
+    if (!config) return;
+
+    this.setData({
+      editing: {
+        visible: true,
+        field,
+        label: config.label,
+        type: config.type,
+        placeholder: config.placeholder || '',
+        options: config.options || [],
+        value: this.data.cat[field] !== undefined ? this.data.cat[field] : '',
+      },
+    });
+  },
+
+  onEditInput(e) {
+    this.setData({ 'editing.value': e.detail.value });
+  },
+
+  onEditPick(e) {
+    this.setData({ 'editing.value': e.currentTarget.dataset.value });
+  },
+
+  closeEdit() {
+    this.setData({ 'editing.visible': false });
+  },
+
+  async saveEdit() {
+    const { field, value, type } = this.data.editing;
+
+    // 文本字段校验
+    if (type === 'text' && typeof value === 'string' && !value.trim()) {
+      wx.showToast({ title: '不能为空', icon: 'none' });
+      return;
+    }
+
+    wx.showLoading({ title: '保存中', mask: true });
+    try {
+      const newValue = typeof value === 'string' ? value.trim() : value;
+      await db.collection('cats').doc(this.catId).update({
+        data: { [field]: newValue },
+      });
+      this.setData({
+        [`cat.${field}`]: newValue,
+        statusText: field === 'status' ? STATUS_TEXT[newValue] : this.data.statusText,
+        'editing.visible': false,
+      });
+      if (field === 'name') {
+        wx.setNavigationBarTitle({ title: newValue });
+      }
+      wx.hideLoading();
+      wx.showToast({ title: '已保存', icon: 'success' });
+    } catch (err) {
+      console.error(err);
+      wx.hideLoading();
+      wx.showToast({ title: '保存失败', icon: 'none' });
+    }
+  },
+
+  // ========== 评论 ==========
   onInput(e) {
     const text = e.detail.value;
     this.setData({
@@ -80,6 +177,7 @@ Page({
       count: remaining,
       mediaType: ['image'],
       sourceType: ['album', 'camera'],
+      sizeType: ['compressed'],
       success: res => {
         const newPaths = res.tempFiles.map(f => f.tempFilePath);
         this.setData({
@@ -116,7 +214,6 @@ Page({
 
     wx.showLoading({ title: '发送中', mask: true });
     try {
-      // 并行上传图片到云存储
       const uploads = tempImages.map(path =>
         wx.cloud.uploadFile({
           cloudPath: `comments/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`,
@@ -126,12 +223,11 @@ Page({
       const uploadResults = await Promise.all(uploads);
       const images = uploadResults.map(r => r.fileID);
 
-      // 获取用户信息(可选)
       let userInfo = {};
       try {
         const profile = await wx.getUserProfile({ desc: '用于评论展示' });
         userInfo = profile.userInfo || {};
-      } catch (_) { /* 用户拒绝则匿名 */ }
+      } catch (_) { /* 拒绝则匿名 */ }
 
       await db.collection('comments').add({
         data: {
@@ -145,13 +241,13 @@ Page({
       });
 
       this.setData({ inputText: '', tempImages: [], canSend: false });
+      wx.hideLoading();
       wx.showToast({ title: '发送成功', icon: 'success' });
       this.loadComments();
     } catch (err) {
       console.error(err);
-      wx.showToast({ title: '发送失败,请重试', icon: 'none' });
-    } finally {
       wx.hideLoading();
+      wx.showToast({ title: '发送失败', icon: 'none' });
     }
   },
 });

@@ -1,0 +1,43 @@
+<!--pages/search/search.wxml-->
+<view class="container">
+  <view class="search-box">
+    <text class="icon">🔍</text>
+    <input
+      class="input"
+      placeholder="名字、位置、性格..."
+      value="{{query}}"
+      bindinput="onInput"
+      confirm-type="search"
+      bindconfirm="doSearch"
+      focus="{{true}}"/>
+    <text class="clear" wx:if="{{query}}" bindtap="clearQuery">✕</text>
+  </view>
+
+  <view class="hint" wx:if="{{!searched}}">
+    输入关键词后回车搜索
+  </view>
+
+  <view class="result-info" wx:if="{{searched}}">
+    找到 {{cats.length}} 只匹配的猫咪
+  </view>
+
+  <view class="grid" wx:if="{{cats.length > 0}}">
+    <view class="cat-card" wx:for="{{cats}}" wx:key="_id" bindtap="goToDetail" data-id="{{item._id}}">
+      <image class="photo" src="{{item.photos[0]}}" mode="aspectFill"/>
+      <view class="info">
+        <view class="name-row">
+          <text class="name">{{item.name}}</text>
+          <text class="gender-{{item.gender}}">{{item.gender === 'male' ? '♂' : item.gender === 'female' ? '♀' : '?'}}</text>
+        </view>
+        <view class="meta">📍 {{item.location || '位置未知'}}</view>
+        <view class="meta status-{{item.status}}">{{statusLabels[item.status]}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty" wx:if="{{searched && cats.length === 0}}">
+    <view class="empty-emoji">🔍</view>
+    <view>没找到匹配的猫咪</view>
+    <view class="empty-tip">换个关键词试试?</view>
+  </view>
+</view>

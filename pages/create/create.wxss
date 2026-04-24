@@ -1,0 +1,133 @@
+/* pages/create/create.wxss */
+.container {
+  padding: 24rpx 32rpx 60rpx;
+}
+
+.section {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 28rpx 32rpx;
+  margin-bottom: 20rpx;
+}
+.section.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.label {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+.label-inline {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #333;
+}
+.required {
+  color: #FF5722;
+  font-size: 28rpx;
+  margin-left: 4rpx;
+}
+
+/* 照片 */
+.photo-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+.photo-item {
+  position: relative;
+  width: 180rpx;
+  height: 180rpx;
+}
+.photo-item image {
+  width: 100%;
+  height: 100%;
+  border-radius: 12rpx;
+  background: #eee;
+}
+.photo-del {
+  position: absolute;
+  top: -10rpx;
+  right: -10rpx;
+  width: 40rpx;
+  height: 40rpx;
+  line-height: 36rpx;
+  text-align: center;
+  background: #000;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 32rpx;
+}
+.photo-add {
+  width: 180rpx;
+  height: 180rpx;
+  border: 2rpx dashed #ccc;
+  border-radius: 12rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+}
+.plus {
+  font-size: 60rpx;
+  font-weight: 200;
+  line-height: 1;
+}
+.tip {
+  font-size: 22rpx;
+  margin-top: 8rpx;
+}
+
+/* 输入 */
+.input {
+  background: #F6F6F6;
+  border-radius: 12rpx;
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+}
+.textarea {
+  background: #F6F6F6;
+  border-radius: 12rpx;
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 160rpx;
+}
+
+/* 药丸按钮 */
+.radio-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+.pill {
+  padding: 14rpx 30rpx;
+  background: #F2F2F2;
+  color: #666;
+  border-radius: 30rpx;
+  font-size: 26rpx;
+}
+.pill-active {
+  background: #FF9800;
+  color: #fff;
+}
+
+/* 提交 */
+.submit-btn {
+  background: linear-gradient(135deg, #FF9800, #FF6F00);
+  color: #fff;
+  border-radius: 50rpx;
+  padding: 24rpx 0;
+  font-size: 32rpx;
+  margin-top: 40rpx;
+}
+.submit-btn[disabled] {
+  background: #ccc;
+  color: #fff;
+}

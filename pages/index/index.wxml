@@ -5,6 +5,12 @@
     <view class="subtitle">记录校园里的每一只小可爱 🐾</view>
   </view>
 
+  <!-- 搜索栏 -->
+  <view class="search-bar" bindtap="goToSearch">
+    <text class="search-icon">🔍</text>
+    <text class="search-placeholder">搜索猫咪名字、位置、性格...</text>
+  </view>
+
   <view class="grid">
     <view class="card card-current" bindtap="goToList" data-status="current" data-title="校内猫猫">
       <view class="emoji">🐱</view>

@@ -7,9 +7,6 @@
         <image class="photo" src="{{item}}" mode="aspectFill" bindtap="previewPhoto" data-url="{{item}}"/>
       </swiper-item>
     </block>
-    <swiper-item wx:else>
-      <image class="photo" src="https://placekitten.com/800/800" mode="aspectFill"/>
-    </swiper-item>
   </swiper>
 
   <!-- 基本信息 -->
@@ -17,21 +14,39 @@
     <view class="name-row">
       <text class="name">{{cat.name || '...'}}</text>
       <text class="gender-{{cat.gender}}">{{cat.gender === 'male' ? '♂' : cat.gender === 'female' ? '♀' : '?'}}</text>
+      <text class="edit-icon" bindtap="editField" data-field="name">✎</text>
+      <text class="edit-icon" bindtap="editField" data-field="gender">✎</text>
     </view>
-    <view class="tags">
-      <view class="tag">{{cat.neutered ? '✓ 已绝育' : '✗ 未绝育'}}</view>
-      <view class="tag">📍 {{cat.location || '位置未知'}}</view>
-      <view class="tag status-{{cat.status}}">{{statusText}}</view>
+
+    <view class="tag-row">
+      <view class="tag" bindtap="editField" data-field="neutered">
+        <text>{{cat.neutered ? '✓ 已绝育' : '✗ 未绝育'}}</text>
+        <text class="edit-icon small">✎</text>
+      </view>
+      <view class="tag" bindtap="editField" data-field="location">
+        <text>📍 {{cat.location || '位置未知'}}</text>
+        <text class="edit-icon small">✎</text>
+      </view>
+      <view class="tag status-{{cat.status}}" bindtap="editField" data-field="status">
+        <text>{{statusText}}</text>
+        <text class="edit-icon small">✎</text>
+      </view>
     </view>
 
     <view class="section">
-      <view class="section-title">性格</view>
-      <view class="section-content">{{cat.personality || '暂无描述'}}</view>
+      <view class="section-title">
+        <text>性格</text>
+        <text class="edit-icon" bindtap="editField" data-field="personality">✎</text>
+      </view>
+      <view class="section-content">{{cat.personality || '(暂无)'}}</view>
     </view>
 
-    <view class="section" wx:if="{{cat.description}}">
-      <view class="section-title">故事</view>
-      <view class="section-content">{{cat.description}}</view>
+    <view class="section">
+      <view class="section-title">
+        <text>故事</text>
+        <text class="edit-icon" bindtap="editField" data-field="description">✎</text>
+      </view>
+      <view class="section-content">{{cat.description || '(暂无)'}}</view>
     </view>
   </view>
 
@@ -54,19 +69,15 @@
         <view class="comment-imgs" wx:if="{{item.images.length}}">
           <image
             wx:for="{{item.images}}"
-            wx:for-item="img"
-            wx:key="*this"
-            src="{{img}}"
-            mode="aspectFill"
+            wx:for-item="img" wx:key="*this"
+            src="{{img}}" mode="aspectFill"
             bindtap="previewCommentImg"
-            data-url="{{img}}"
-            data-urls="{{item.images}}"/>
+            data-url="{{img}}" data-urls="{{item.images}}"/>
         </view>
       </view>
     </view>
   </view>
 
-  <!-- 底部占位,防止内容被输入栏挡住 -->
   <view style="height: 180rpx"></view>
 
   <!-- 评论输入栏 -->
@@ -74,7 +85,7 @@
     <view class="preview-row" wx:if="{{tempImages.length}}">
       <view class="preview-item" wx:for="{{tempImages}}" wx:key="*this">
         <image src="{{item}}" mode="aspectFill"/>
-        <view class="preview-del" bindtap="removeTempImg" data-index="{{index}}">×</view>
+        <view class="preview-del" catchtap="removeTempImg" data-index="{{index}}">×</view>
       </view>
     </view>
     <view class="input-row">
@@ -87,6 +98,45 @@
         bindconfirm="submitComment"/>
       <view class="icon-btn" bindtap="chooseImage">📷</view>
       <view class="send-btn {{canSend ? 'active' : ''}}" bindtap="submitComment">发送</view>
+    </view>
+  </view>
+
+  <!-- 编辑弹窗 -->
+  <view class="modal-mask" wx:if="{{editing.visible}}" bindtap="closeEdit"></view>
+  <view class="modal" wx:if="{{editing.visible}}">
+    <view class="modal-title">编辑 {{editing.label}}</view>
+
+    <!-- 文本输入 -->
+    <input
+      wx:if="{{editing.type === 'text'}}"
+      class="modal-input"
+      placeholder="{{editing.placeholder}}"
+      value="{{editing.value}}"
+      bindinput="onEditInput"
+      focus="{{true}}"/>
+
+    <!-- 多行输入 -->
+    <textarea
+      wx:if="{{editing.type === 'textarea'}}"
+      class="modal-textarea"
+      placeholder="{{editing.placeholder}}"
+      value="{{editing.value}}"
+      bindinput="onEditInput"
+      auto-focus="{{true}}"/>
+
+    <!-- 选项 -->
+    <view wx:if="{{editing.type === 'radio'}}" class="modal-options">
+      <view
+        wx:for="{{editing.options}}" wx:key="value"
+        class="pill {{editing.value === item.value ? 'pill-active' : ''}}"
+        bindtap="onEditPick" data-value="{{item.value}}">
+        {{item.label}}
+      </view>
+    </view>
+
+    <view class="modal-actions">
+      <view class="btn btn-cancel" bindtap="closeEdit">取消</view>
+      <view class="btn btn-save" bindtap="saveEdit">保存</view>
     </view>
   </view>
 </view>

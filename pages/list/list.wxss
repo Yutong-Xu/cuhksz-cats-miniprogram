@@ -1,6 +1,7 @@
 /* pages/list/list.wxss */
 .container {
   padding: 24rpx 24rpx 60rpx;
+  min-height: 100vh;
 }
 
 .grid {
@@ -57,4 +58,35 @@
 .empty-emoji {
   font-size: 100rpx;
   margin-bottom: 20rpx;
+}
+.empty-tip {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #bbb;
+}
+
+/* 悬浮添加按钮 */
+.fab {
+  position: fixed;
+  right: 40rpx;
+  bottom: calc(60rpx + env(safe-area-inset-bottom));
+  width: 110rpx;
+  height: 110rpx;
+  background: linear-gradient(135deg, #FF9800, #FF6F00);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba(255, 152, 0, 0.4);
+  z-index: 20;
+  transition: transform .15s;
+}
+.fab:active {
+  transform: scale(0.92);
+}
+.fab-plus {
+  color: #fff;
+  font-size: 64rpx;
+  font-weight: 300;
+  line-height: 1;
 }

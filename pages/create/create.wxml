@@ -1,0 +1,79 @@
+<!--pages/create/create.wxml-->
+<view class="container">
+  <!-- 照片 -->
+  <view class="section">
+    <view class="label">照片 <text class="required">*</text></view>
+    <view class="photo-grid">
+      <view class="photo-item" wx:for="{{photos}}" wx:key="*this">
+        <image src="{{item}}" mode="aspectFill"/>
+        <view class="photo-del" catchtap="removePhoto" data-index="{{index}}">×</view>
+      </view>
+      <view class="photo-add" bindtap="choosePhotos" wx:if="{{photos.length < 9}}">
+        <text class="plus">+</text>
+        <text class="tip">{{photos.length}}/9</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 名字 -->
+  <view class="section">
+    <view class="label">名字 <text class="required">*</text></view>
+    <input class="input" placeholder="给它起个名字" value="{{name}}" data-field="name" bindinput="onFieldInput" maxlength="30"/>
+  </view>
+
+  <!-- 性别 -->
+  <view class="section">
+    <view class="label">性别</view>
+    <view class="radio-row">
+      <view
+        wx:for="{{genderOptions}}" wx:key="value"
+        class="pill {{gender === item.value ? 'pill-active' : ''}}"
+        bindtap="onGenderChange" data-value="{{item.value}}">
+        {{item.label}}
+      </view>
+    </view>
+  </view>
+
+  <!-- 类别 -->
+  <view class="section">
+    <view class="label">类别</view>
+    <view class="radio-row">
+      <view
+        wx:for="{{statusOptions}}" wx:key="value"
+        class="pill {{status === item.value ? 'pill-active' : ''}}"
+        bindtap="onStatusChange" data-value="{{item.value}}">
+        {{item.label}}
+      </view>
+    </view>
+  </view>
+
+  <!-- 位置 -->
+  <view class="section">
+    <view class="label">所在位置</view>
+    <input class="input" placeholder="例:下园食堂附近" value="{{location}}" data-field="location" bindinput="onFieldInput" maxlength="50"/>
+  </view>
+
+  <!-- 绝育 -->
+  <view class="section row">
+    <view class="label-inline">是否已绝育</view>
+    <switch checked="{{neutered}}" bindchange="onNeuteredChange" color="#FF9800"/>
+  </view>
+
+  <!-- 性格 -->
+  <view class="section">
+    <view class="label">性格</view>
+    <textarea class="textarea" placeholder="描述一下它的性格..." value="{{personality}}" data-field="personality" bindinput="onFieldInput" maxlength="300"/>
+  </view>
+
+  <!-- 故事 -->
+  <view class="section">
+    <view class="label">故事/简介(选填)</view>
+    <textarea class="textarea" placeholder="它的故事..." value="{{description}}" data-field="description" bindinput="onFieldInput" maxlength="500"/>
+  </view>
+
+  <button class="submit-btn" bindtap="submit" disabled="{{submitting}}">
+    {{submitting ? '提交中...' : '添加猫咪'}}
+  </button>
+
+  <view style="height: 80rpx"></view>
+</view>

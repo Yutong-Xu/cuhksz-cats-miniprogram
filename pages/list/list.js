@@ -13,6 +13,10 @@ Page({
     const title = decodeURIComponent(options.title || '猫猫列表');
     wx.setNavigationBarTitle({ title });
     this.setData({ status });
+  },
+
+  onShow() {
+    // 每次回到这个页面都刷新(从录入页返回后能立即看到新数据)
     this.loadCats();
   },
 
@@ -40,6 +44,13 @@ Page({
   goToDetail(e) {
     wx.navigateTo({
       url: `/pages/detail/detail?id=${e.currentTarget.dataset.id}`,
+    });
+  },
+
+  goToCreate() {
+    // 带上当前类别,录入页会预选
+    wx.navigateTo({
+      url: `/pages/create/create?status=${this.data.status}`,
     });
   },
 });

@@ -2,7 +2,7 @@
 <view class="container">
   <view class="grid" wx:if="{{cats.length > 0}}">
     <view class="cat-card" wx:for="{{cats}}" wx:key="_id" bindtap="goToDetail" data-id="{{item._id}}">
-      <image class="photo" src="{{item.photos[0] || 'https://placekitten.com/400/400'}}" mode="aspectFill"/>
+      <image class="photo" src="{{item.photos[0]}}" mode="aspectFill"/>
       <view class="info">
         <view class="name-row">
           <text class="name">{{item.name}}</text>
@@ -16,5 +16,11 @@
   <view class="empty" wx:elif="{{!loading}}">
     <view class="empty-emoji">🐾</view>
     <view>还没有猫猫记录喵~</view>
+    <view class="empty-tip">点右下角 + 添加第一只</view>
+  </view>
+
+  <!-- 悬浮添加按钮 -->
+  <view class="fab" bindtap="goToCreate">
+    <text class="fab-plus">+</text>
   </view>
 </view>
