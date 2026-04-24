@@ -1,5 +1,6 @@
 // pages/create/create.js
 const db = wx.cloud.database();
+const { compressImages } = require('../../utils/compress.js');
 
 Page({
   data: {
@@ -91,8 +92,10 @@ Page({
     wx.showLoading({ title: '上传中', mask: true });
 
     try {
-      // 并行上传所有照片
-      const uploads = photos.map(path =>
+      
+      // 先批量压缩,再上传
+      const compressedPaths = await compressImages(photos);
+      const uploads = compressedPaths.map(path =>
         wx.cloud.uploadFile({
           cloudPath: `cats/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`,
           filePath: path,

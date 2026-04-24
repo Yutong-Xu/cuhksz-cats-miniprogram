@@ -1,6 +1,7 @@
 // pages/detail/detail.js
 const db = wx.cloud.database();
 const _ = db.command;
+const { compressImages } = require('../../utils/compress.js');
 
 const STATUS_TEXT = {
   current: '校内',
@@ -231,17 +232,18 @@ Page({
 
     wx.showLoading({ title: '保存中', mask: true });
     try {
-      // 1. 上传新照片
-      let uploadedIds = [];
-      if (toUpload.length) {
-        const results = await Promise.all(toUpload.map(item =>
-          wx.cloud.uploadFile({
-            cloudPath: `cats/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`,
-            filePath: item.localPath,
-          })
-        ));
-        uploadedIds = results.map(r => r.fileID);
-      }
+     // 1. 压缩 + 上传新照片
+     let uploadedIds = [];
+     if (toUpload.length) {
+       const compressedPaths = await compressImages(toUpload.map(i => i.localPath));
+       const results = await Promise.all(compressedPaths.map(path =>
+         wx.cloud.uploadFile({
+           cloudPath: `cats/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`,
+           filePath: path,
+         })
+       ));
+       uploadedIds = results.map(r => r.fileID);
+     }
 
       // 2. 更新数据库(先更数据库,确保云存储删除失败时数据状态一致)
       const newPhotos = [...kept, ...uploadedIds];
@@ -379,13 +381,12 @@ Page({
 
     wx.showLoading({ title: '发送中', mask: true });
     try {
-      const uploads = tempImages.map(path =>
+      const compressedPaths = await compressImages(tempImages);
+      const uploads = compressedPaths.map(path =>
         wx.cloud.uploadFile({
           cloudPath: `comments/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`,
           filePath: path,
         })
-
-      
       );
       const uploadResults = await Promise.all(uploads);
       const images = uploadResults.map(r => r.fileID);
