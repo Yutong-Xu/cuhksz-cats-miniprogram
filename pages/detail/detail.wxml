@@ -61,7 +61,7 @@
       还没有评论,来说两句吧 🐾
     </view>
 
-    <view class="comment" wx:for="{{comments}}" wx:key="_id">
+    <view class="comment" wx:for="{{comments}}" wx:key="_id" bindlongpress="onCommentLongPress" data-comment="{{item}}">
       <image class="avatar" src="{{item.avatar || '/images/default-avatar.png'}}"/>
       <view class="comment-main">
         <view class="comment-head">

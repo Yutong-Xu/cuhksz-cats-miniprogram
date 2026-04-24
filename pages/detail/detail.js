@@ -384,6 +384,8 @@ Page({
           cloudPath: `comments/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`,
           filePath: path,
         })
+
+      
       );
       const uploadResults = await Promise.all(uploads);
       const images = uploadResults.map(r => r.fileID);
@@ -415,7 +417,52 @@ Page({
       wx.showToast({ title: '发送失败', icon: 'none' });
     }
   },
+
+  // ========== 删除评论 ==========
+  onCommentLongPress(e) {
+    const comment = e.currentTarget.dataset.comment;
+    wx.showActionSheet({
+      itemList: ['删除评论'],
+      itemColor: '#E53935',
+      success: async (res) => {
+        if (res.tapIndex === 0) {
+          await this.deleteComment(comment);
+        }
+      },
+    });
+  },
+
+  async deleteComment(comment) {
+    wx.showLoading({ title: '删除中', mask: true });
+    try {
+      // 1. 删数据库记录
+      await db.collection('comments').doc(comment._id).remove();
+
+      // 2. 清理云存储里的图片(失败不阻塞)
+      const cloudImages = (comment.images || []).filter(
+        f => typeof f === 'string' && f.startsWith('cloud://')
+      );
+      if (cloudImages.length) {
+        wx.cloud.deleteFile({ fileList: cloudImages }).catch(err => {
+          console.warn('云存储清理失败:', err);
+        });
+      }
+
+      // 3. 本地移除
+      this.setData({
+        comments: this.data.comments.filter(c => c._id !== comment._id),
+      });
+      wx.hideLoading();
+      wx.showToast({ title: '已删除', icon: 'success' });
+    } catch (err) {
+      console.error(err);
+      wx.hideLoading();
+      wx.showToast({ title: '删除失败', icon: 'none' });
+    }
+  },
 });
+
+
 
 function formatTime(date) {
   const d = new Date(date);
@@ -426,5 +473,6 @@ function formatTime(date) {
   if (diff < 86400) return `${Math.floor(diff / 3600)}小时前`;
   if (diff < 86400 * 7) return `${Math.floor(diff / 86400)}天前`;
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  
 }
 function pad(n) { return n < 10 ? '0' + n : '' + n; }
