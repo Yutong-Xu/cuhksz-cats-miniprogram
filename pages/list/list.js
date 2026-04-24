@@ -1,5 +1,6 @@
 // pages/list/list.js
 const db = wx.cloud.database();
+const { toTempUrls } = require('../../utils/cloudUrl.js');
 
 Page({
   data: {
@@ -16,7 +17,6 @@ Page({
   },
 
   onShow() {
-    // 每次回到这个页面都刷新(从录入页返回后能立即看到新数据)
     this.loadCats();
   },
 
@@ -32,7 +32,14 @@ Page({
         .orderBy('createdAt', 'desc')
         .limit(50)
         .get();
-      this.setData({ cats: res.data });
+
+      // 把每只猫的 photos fileID 转成临时 URL
+      const cats = await Promise.all(res.data.map(async cat => ({
+        ...cat,
+        photos: await toTempUrls(cat.photos || []),
+      })));
+
+      this.setData({ cats });
     } catch (err) {
       console.error('加载失败', err);
       wx.showToast({ title: '加载失败', icon: 'none' });
@@ -48,7 +55,6 @@ Page({
   },
 
   goToCreate() {
-    // 带上当前类别,录入页会预选
     wx.navigateTo({
       url: `/pages/create/create?status=${this.data.status}`,
     });

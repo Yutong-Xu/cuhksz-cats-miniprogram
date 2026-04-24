@@ -1,6 +1,7 @@
 // pages/search/search.js
 const db = wx.cloud.database();
 const _ = db.command;
+const { toTempUrls } = require('../../utils/cloudUrl.js');
 
 Page({
   data: {
@@ -44,7 +45,12 @@ Page({
         .limit(50)
         .get();
 
-      this.setData({ cats: res.data, searched: true });
+      const cats = await Promise.all(res.data.map(async cat => ({
+        ...cat,
+        photos: await toTempUrls(cat.photos || []),
+      })));
+
+      this.setData({ cats, searched: true });
     } catch (err) {
       console.error(err);
       wx.showToast({ title: '搜索失败', icon: 'none' });

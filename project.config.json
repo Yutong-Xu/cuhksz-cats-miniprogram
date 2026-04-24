@@ -2,6 +2,7 @@
   "miniprogramRoot": "./",
   "projectname": "cuhksz-cats",
   "description": "CUHK(SZ) 猫猫图鉴",
+  "cloudfunctionRoot": "./cloudfunctions/",
   "appid": "wxbce13cfe987abe07",
   "setting": {
     "urlCheck": true,
@@ -27,5 +28,6 @@
     }
   },
   "compileType": "miniprogram",
-  "libVersion": "2.32.3"
+  "libVersion": "2.32.3",
+  "cloudfunctionTemplateRoot": "cloudfunctionTemplate/"
 }

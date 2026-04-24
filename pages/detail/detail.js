@@ -1,6 +1,7 @@
 // pages/detail/detail.js
 const db = wx.cloud.database();
 const { compressImages } = require('../../utils/compress.js');
+const { toTempUrls } = require('../../utils/cloudUrl.js');
 
 const STATUS_TEXT = {
   current:   '校内',
@@ -32,7 +33,7 @@ const FIELD_CONFIG = {
     { value: 'deceased',  label: '已去世' },
   ]},
   personality: { label: '性格',     type: 'textarea', placeholder: '描述一下它的性格...' },
-  description: { label: '故事',     type: 'textarea', placeholder: '它的故事...' },
+  description: { label: '简介',     type: 'textarea', placeholder: '它的故事...' },
 };
 
 Page({
@@ -64,11 +65,16 @@ Page({
   async loadCat() {
     try {
       const res = await db.collection('cats').doc(this.catId).get();
+      const cat = res.data;
+      // 原始 fileID 列表保留一份,供删除和管理用
+      this._originalPhotoIds = [...(cat.photos || [])];
+      // 展示用:转成临时 URL
+      cat.photos = await toTempUrls(cat.photos || []);
       this.setData({
-        cat: res.data,
-        statusText: STATUS_TEXT[res.data.status] || '',
+        cat,
+        statusText: STATUS_TEXT[cat.status] || '',
       });
-      wx.setNavigationBarTitle({ title: res.data.name || '猫咪详情' });
+      wx.setNavigationBarTitle({ title: cat.name || '猫咪详情' });
     } catch (err) {
       console.error(err);
       wx.showToast({ title: '加载失败', icon: 'none' });
@@ -139,9 +145,13 @@ Page({
 
   // ========== 照片管理 ==========
   openPhotoManager() {
-    const items = (this.data.cat.photos || []).map((url, i) => ({
+    // 用原始 fileID 做 key,临时 URL 做展示
+    const originalIds = this._originalPhotoIds || [];
+    const displayUrls = this.data.cat.photos || [];
+    const items = originalIds.map((fileId, i) => ({
       key: `existing_${i}`,
-      url,
+      fileId,                          // 真正的 fileID,删除/保存时用
+      url: displayUrls[i] || fileId,   // 展示用临时 URL
       isNew: false,
       pendingDelete: false,
     }));
@@ -197,11 +207,12 @@ Page({
 
   async savePhotoChanges() {
     const items = this.data.photoManager.items;
-    const toDelete = items.filter(x => !x.isNew && x.pendingDelete).map(x => x.url);
+    // toDelete 用 fileId(真正的 cloud:// 路径),不是展示 URL
+    const toDelete = items.filter(x => !x.isNew && x.pendingDelete).map(x => x.fileId);
     const toUpload = items.filter(x => x.isNew);
-    const kept = items.filter(x => !x.isNew && !x.pendingDelete).map(x => x.url);
+    const keptFileIds = items.filter(x => !x.isNew && !x.pendingDelete).map(x => x.fileId);
 
-    if (kept.length + toUpload.length === 0) {
+    if (keptFileIds.length + toUpload.length === 0) {
       wx.showToast({ title: '至少保留一张照片', icon: 'none' });
       return;
     }
@@ -220,9 +231,9 @@ Page({
         uploadedIds = results.map(r => r.fileID);
       }
 
-      const newPhotos = [...kept, ...uploadedIds];
+      const newPhotoIds = [...keptFileIds, ...uploadedIds];
       await db.collection('cats').doc(this.catId).update({
-        data: { photos: newPhotos },
+        data: { photos: newPhotoIds },
       });
 
       if (toDelete.length) {
@@ -231,8 +242,11 @@ Page({
         });
       }
 
+      // 更新本地:原始 fileID 和展示 URL 都要更新
+      this._originalPhotoIds = newPhotoIds;
+      const displayUrls = await toTempUrls(newPhotoIds);
       this.setData({
-        'cat.photos': newPhotos,
+        'cat.photos': displayUrls,
         'photoManager.visible': false,
       });
       wx.hideLoading();
@@ -262,7 +276,8 @@ Page({
   async doDeleteCat() {
     wx.showLoading({ title: '删除中', mask: true });
     try {
-      const cloudFiles = (this.data.cat.photos || []).filter(
+      // 用原始 fileID 清理云存储
+      const cloudFiles = (this._originalPhotoIds || []).filter(
         f => typeof f === 'string' && f.startsWith('cloud://')
       );
 

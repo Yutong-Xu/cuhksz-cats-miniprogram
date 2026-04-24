@@ -1,0 +1,9 @@
+{
+  "name": "getFileUrls",
+  "version": "1.0.0",
+  "description": "Convert fileIDs to temp URLs using admin privileges",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}
