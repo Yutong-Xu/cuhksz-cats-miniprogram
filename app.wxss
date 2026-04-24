@@ -1,0 +1,14 @@
+/* app.wxss */
+page {
+  background: #F6F6F6;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  color: #222;
+  font-size: 28rpx;
+}
+
+button {
+  background: initial;
+}
+button::after {
+  border: none;
+}

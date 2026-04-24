@@ -1,0 +1,40 @@
+# ===== 微信开发者工具 =====
+# 本地配置(含个人电脑路径、编译配置、断点等),每人都不一样
+project.private.config.json
+
+# ===== 云函数 / npm =====
+# 云函数的依赖(通过 package.json 重装即可)
+cloudfunctions/*/node_modules/
+node_modules/
+# 小程序 npm 构建产物(通过「工具 → 构建 npm」重新生成)
+miniprogram_npm/
+
+# ===== 敏感配置 =====
+# 本地真实配置(云环境 ID、管理员 openid 白名单、第三方 key 等)
+config.local.js
+.env
+.env.local
+
+# ===== 日志 & 缓存 =====
+*.log
+npm-debug.log*
+.cache/
+.temp/
+
+# ===== 系统文件 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== IDE =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ===== 构建 & 打包 =====
+dist/
+build/
+*.zip
+*.tar.gz

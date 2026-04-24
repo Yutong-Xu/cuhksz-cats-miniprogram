@@ -1,0 +1,20 @@
+<!--pages/list/list.wxml-->
+<view class="container">
+  <view class="grid" wx:if="{{cats.length > 0}}">
+    <view class="cat-card" wx:for="{{cats}}" wx:key="_id" bindtap="goToDetail" data-id="{{item._id}}">
+      <image class="photo" src="{{item.photos[0] || 'https://placekitten.com/400/400'}}" mode="aspectFill"/>
+      <view class="info">
+        <view class="name-row">
+          <text class="name">{{item.name}}</text>
+          <text class="gender-{{item.gender}}">{{item.gender === 'male' ? '♂' : item.gender === 'female' ? '♀' : '?'}}</text>
+        </view>
+        <view class="location">📍 {{item.location || '位置未知'}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty" wx:elif="{{!loading}}">
+    <view class="empty-emoji">🐾</view>
+    <view>还没有猫猫记录喵~</view>
+  </view>
+</view>

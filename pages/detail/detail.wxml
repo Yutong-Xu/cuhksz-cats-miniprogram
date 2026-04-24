@@ -1,0 +1,92 @@
+<!--pages/detail/detail.wxml-->
+<view class="container">
+  <!-- 照片 swiper -->
+  <swiper class="photos" indicator-dots="{{cat.photos.length > 1}}" autoplay="{{false}}" circular>
+    <block wx:if="{{cat.photos.length}}">
+      <swiper-item wx:for="{{cat.photos}}" wx:key="*this">
+        <image class="photo" src="{{item}}" mode="aspectFill" bindtap="previewPhoto" data-url="{{item}}"/>
+      </swiper-item>
+    </block>
+    <swiper-item wx:else>
+      <image class="photo" src="https://placekitten.com/800/800" mode="aspectFill"/>
+    </swiper-item>
+  </swiper>
+
+  <!-- 基本信息 -->
+  <view class="card">
+    <view class="name-row">
+      <text class="name">{{cat.name || '...'}}</text>
+      <text class="gender-{{cat.gender}}">{{cat.gender === 'male' ? '♂' : cat.gender === 'female' ? '♀' : '?'}}</text>
+    </view>
+    <view class="tags">
+      <view class="tag">{{cat.neutered ? '✓ 已绝育' : '✗ 未绝育'}}</view>
+      <view class="tag">📍 {{cat.location || '位置未知'}}</view>
+      <view class="tag status-{{cat.status}}">{{statusText}}</view>
+    </view>
+
+    <view class="section">
+      <view class="section-title">性格</view>
+      <view class="section-content">{{cat.personality || '暂无描述'}}</view>
+    </view>
+
+    <view class="section" wx:if="{{cat.description}}">
+      <view class="section-title">故事</view>
+      <view class="section-content">{{cat.description}}</view>
+    </view>
+  </view>
+
+  <!-- 评论区 -->
+  <view class="card">
+    <view class="section-title">评论 ({{comments.length}})</view>
+
+    <view class="empty-comment" wx:if="{{comments.length === 0}}">
+      还没有评论,来说两句吧 🐾
+    </view>
+
+    <view class="comment" wx:for="{{comments}}" wx:key="_id">
+      <image class="avatar" src="{{item.avatar || '/images/default-avatar.png'}}"/>
+      <view class="comment-main">
+        <view class="comment-head">
+          <text class="nickname">{{item.nickname || '匿名同学'}}</text>
+          <text class="time">{{item.timeText}}</text>
+        </view>
+        <view class="comment-text" wx:if="{{item.content}}">{{item.content}}</view>
+        <view class="comment-imgs" wx:if="{{item.images.length}}">
+          <image
+            wx:for="{{item.images}}"
+            wx:for-item="img"
+            wx:key="*this"
+            src="{{img}}"
+            mode="aspectFill"
+            bindtap="previewCommentImg"
+            data-url="{{img}}"
+            data-urls="{{item.images}}"/>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部占位,防止内容被输入栏挡住 -->
+  <view style="height: 180rpx"></view>
+
+  <!-- 评论输入栏 -->
+  <view class="input-bar">
+    <view class="preview-row" wx:if="{{tempImages.length}}">
+      <view class="preview-item" wx:for="{{tempImages}}" wx:key="*this">
+        <image src="{{item}}" mode="aspectFill"/>
+        <view class="preview-del" bindtap="removeTempImg" data-index="{{index}}">×</view>
+      </view>
+    </view>
+    <view class="input-row">
+      <input
+        class="input"
+        placeholder="说点什么..."
+        value="{{inputText}}"
+        bindinput="onInput"
+        confirm-type="send"
+        bindconfirm="submitComment"/>
+      <view class="icon-btn" bindtap="chooseImage">📷</view>
+      <view class="send-btn {{canSend ? 'active' : ''}}" bindtap="submitComment">发送</view>
+    </view>
+  </view>
+</view>

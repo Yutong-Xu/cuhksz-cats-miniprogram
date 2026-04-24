@@ -1,0 +1,35 @@
+<!--pages/index/index.wxml-->
+<view class="container">
+  <view class="header">
+    <view class="title">CUHK(SZ) 猫猫图鉴</view>
+    <view class="subtitle">记录校园里的每一只小可爱 🐾</view>
+  </view>
+
+  <view class="grid">
+    <view class="card card-current" bindtap="goToList" data-status="current" data-title="校内猫猫">
+      <view class="emoji">🐱</view>
+      <view class="card-title">校内猫猫</view>
+      <view class="card-desc">目前在校园里的猫</view>
+    </view>
+
+    <view class="card card-history" bindtap="goToList" data-status="historical" data-title="历史猫猫">
+      <view class="emoji">📖</view>
+      <view class="card-title">历史猫猫</view>
+      <view class="card-desc">曾经出现过的毛孩子</view>
+    </view>
+
+    <view class="card card-adoption" bindtap="goToList" data-status="adoption" data-title="待领养猫猫">
+      <view class="emoji">🏠</view>
+      <view class="card-title">待领养</view>
+      <view class="card-desc">寻找新家的猫</view>
+    </view>
+
+    <view class="card card-foster" bindtap="goToList" data-status="fostering" data-title="寄养/医治中">
+      <view class="emoji">🏥</view>
+      <view class="card-title">寄养/医治</view>
+      <view class="card-desc">正在室内照护</view>
+    </view>
+  </view>
+
+  <view class="footer">由热爱猫猫的同学共同维护 ♡</view>
+</view>
