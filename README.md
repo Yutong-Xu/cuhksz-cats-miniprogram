@@ -1,66 +1,178 @@
-# CUHK(SZ) 猫猫图鉴
+# 🐾 CUHK(SZ) 校园猫咪图鉴
 
-微信小程序,基于原生框架 + 云开发(CloudBase)。
+> 香港中文大学（深圳）流浪猫咪图鉴小程序，由学生协作录入与维护。
 
-## 目录结构
+一个面向 CUHK(SZ) 全校学生的微信小程序，用于记录、查找和共同维护校园里的每一只流浪猫。
+
+---
+
+## ✨ 功能特性
+
+### 📋 6 类生命状态分类
+
+按照流浪猫在校园中的真实状态划分，覆盖完整生命周期：
+
+| 分类 | 含义 |
+|---|---|
+| 🐱 校内猫猫 | 目前活跃在校园里的猫 |
+| 🏠 待领养 | 寻找新家的猫 |
+| 🏥 寄养 / 医治 | 正在室内照护或康复中 |
+| 💚 已领养 | 已找到幸福家庭 |
+| 🔍 已失踪 | 近期未见踪影，欢迎留意 |
+| 🌸 已去世 | 永远怀念 |
+
+### 🤝 全员协作
+
+**每个同学都可以**：
+- 录入新发现的猫咪（照片、名字、性别、位置、性格等）
+- 编辑已有猫咪的任意信息（点字段旁的 ✎ 即可在线编辑）
+- 管理猫咪的照片（添加新照片 / 删除过期照片）
+- 在状态变化时迁移分类（例如从「校内」→「已领养」）
+
+### 🔍 多维度搜索
+
+支持按**名字、位置、性格、故事**全文模糊匹配。在 50+ 只猫的图鉴里快速找到你想找的那只。
+
+### 📸 智能照片处理
+
+- 上传前**自动两阶段压缩**（微信原生 + 自定义压缩）
+- 单图从 3-6 MB 压至 200-600 KB，体验流畅且节省云存储
+- 支持每只猫最多 9 张照片，可自由增删
+
+---
+
+## 🛠 技术栈
 
 ```
-├── app.js / app.json / app.wxss     # 全局
+前端：原生微信小程序（WXML / WXSS / JavaScript）
+后端：腾讯云开发（CloudBase）
+  ├─ NoSQL 文档数据库（cats / comments）
+  ├─ 对象存储（猫咪照片）
+  └─ Node.js 云函数（getFileUrls）
+工程：Git + GitHub + 语义化版本管理
+```
+
+## 🏗 系统架构
+
+```
+┌─────────────────────────────────┐
+│      微信小程序客户端              │
+│  (首页 / 列表 / 详情 / 录入 / 搜索) │
+└────────────┬────────────────────┘
+             │
+        ┌────┴────┬──────────┐
+        ▼         ▼          ▼
+   ┌────────┐ ┌────────┐ ┌────────┐
+   │  云数据库 │ │ 对象存储 │ │ 云函数  │
+   │  (cats) │ │ (照片)  │ │ getFile│
+   └────────┘ └────────┘ │  Urls  │
+                         └────────┘
+```
+
+## 💡 技术亮点
+
+### 1. 单表 status 字段驱动多视图
+
+不为每个分类建独立的 collection，而是用 `status` 字段（`current` / `adoption` / `fostering` / `adopted` / `missing` / `deceased`）驱动 6 个分类页。当猫咪状态变化时，只需更新一个字段而非跨表迁移数据。
+
+### 2. 云函数突破免费环境的存储桶权限限制
+
+腾讯云免费开发环境**禁用了存储桶权限的修改**，导致用户 A 上传的图片用户 B 无法访问。解决方案：
+
+部署一个带管理员权限的云函数 `getFileUrls`，在客户端拉取猫咪列表后，将所有 `cloud://` fileID 批量转换为带签名的临时 URL（`https://...tcb.qcloud.la/...?sign=...`），让所有用户都能加载任意人上传的图片。
+
+```javascript
+// utils/cloudUrl.js
+async function toTempUrls(fileIds) {
+  // 1. 内存缓存命中的直接返回
+  // 2. 未命中的批量调用云函数
+  const res = await wx.cloud.callFunction({
+    name: 'getFileUrls',
+    data: { fileList: fileIds },
+  });
+  return res.result.fileList.map(f => f.tempFileURL);
+}
+```
+
+### 3. 客户端两阶段图片压缩
+
+```javascript
+// utils/compress.js
+// 阶段一：微信原生 compressed 标志做轻压缩
+wx.chooseMedia({ sizeType: ['compressed'], ... });
+
+// 阶段二：上传前再做一次智能压缩
+//   - < 500KB 跳过（避免画质二次损失）
+//   - 长边限制 1600px（手机屏幕已够清晰）
+//   - JPG 质量 70%（视觉无感的最佳 trade-off）
+```
+
+实测压缩比 **5-15x**，云存储 5GB 免费额度可容纳约 12,500 张照片。
+
+### 4. 字段级原地编辑
+
+不跳转独立编辑页，而是在详情页**每个字段旁加一个 ✎ 图标** → 弹出对应类型的编辑框（文本 / 多行 / 单选 / 开关）→ 保存后局部更新。所有 7 个字段共享一个统一的编辑弹窗组件。
+
+```javascript
+const FIELD_CONFIG = {
+  name:     { label: '名字', type: 'text' },
+  gender:   { label: '性别', type: 'radio', options: [...] },
+  neutered: { label: '绝育状态', type: 'radio', options: [...] },
+  // ...
+};
+```
+
+---
+
+## 📂 项目结构
+
+```
+cuhksz-cats/
+├── app.js / app.json / app.wxss   # 小程序全局配置
+├── config.js                       # 云开发环境配置
 ├── pages/
-│   ├── index/   # 首页 4 板块
-│   ├── list/    # 按 status 展示猫猫列表
-│   └── detail/  # 猫猫详情 + 评论区
-└── project.config.json
+│   ├── index/    # 首页：6 分类卡片 + 搜索栏
+│   ├── list/     # 分类列表（含悬浮录入按钮）
+│   ├── detail/   # 详情页：信息展示 + 字段级编辑 + 照片管理
+│   ├── create/   # 新增猫咪表单
+│   └── search/   # 多字段模糊搜索
+├── cloudfunctions/
+│   └── getFileUrls/   # 云函数：fileID → 临时 URL
+└── utils/
+    ├── compress.js    # 图片压缩
+    └── cloudUrl.js    # fileID 转换 + 缓存
 ```
 
-## 跑起来的 4 步
+## 🚀 本地运行
 
-### 1. 准备
-- 下载「微信开发者工具」
-- 在 <https://mp.weixin.qq.com/> 注册小程序账号,拿到 **AppID**(个人号即可)
+1. 注册微信小程序账号，获取 AppID
+2. 用[微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html)导入项目
+3. 开通云开发，把 `config.js` 里的 `cloudEnv` 改为你的环境 ID
+4. 在云开发控制台新建 `cats` collection（权限设为「所有用户可读，仅创建者可读写」）
+5. 部署 `cloudfunctions/getFileUrls` 云函数
+6. 编译运行
 
-### 2. 开通云开发
-- 开发者工具里点击顶部「云开发」按钮,创建环境,会得到一个 **环境 ID**(如 `cuhksz-cats-7g1a2b3c4d`)
-- 把 `app.js` 里的 `env: 'your-env-id'` 替换成你的环境 ID
-- 把 `project.config.json` 里的 `"appid": "touristappid"` 替换成你的 AppID
+## 📈 版本里程碑
 
-### 3. 建数据库集合
-在云开发控制台的「数据库」里手动创建两个集合:
-- `cats`
-- `comments`
+| 版本 | 主要内容 |
+|---|---|
+| v0.1 | MVP：4 分类 + 列表 + 详情 |
+| v0.2 | 新增录入、搜索、字段编辑 |
+| v0.3-0.5 | 长按删除评论 → 移除评论功能（审核机制完善前） |
+| v0.6 | 6 分类细化 |
+| v0.7 | 云函数解决跨用户图片可见性 |
+| v1.0 | 体验版上线，校内测试中 |
 
-**权限设置**(两个都要改):
-- `cats`:所有用户可读,仅创建者可读写(先这样,管理员功能后做)
-- `comments`:所有用户可读,仅创建者可读写
+## 🤖 关于开发过程
 
-### 4. 导入测试数据
-在 `cats` 集合里点「导入」,用下面的 JSON 测试:
+本项目全程使用 AI 编程助手协作开发，是一次完整的 **vibe coding + 工程交付**实践。从需求设计、架构选型、代码实现、调试排错到上线流程的每一步，都通过与 LLM 的迭代对话完成。这个过程让我深入理解了 AI 协作开发的工作流程、判断 AI 输出的边界、以及在 AI 辅助下做工程决策的方式。
 
-```json
-{"name":"橘座","gender":"male","status":"current","location":"下园食堂后","neutered":true,"personality":"极度亲人,讨摸时翻肚皮。见到饭盒会直接跟人走。","photos":["https://placekitten.com/800/800"],"createdAt":"2024-09-01T00:00:00.000Z"}
-{"name":"奶糖","gender":"female","status":"current","location":"诚道图书馆旁","neutered":true,"personality":"胆小,需要慢慢接触。喜欢躲在灌木丛里。","photos":["https://placekitten.com/801/801"],"createdAt":"2024-10-01T00:00:00.000Z"}
-{"name":"黑芝麻","gender":"male","status":"adoption","location":"志同宿舍区","neutered":false,"personality":"活泼好动,适合家里有另一只猫的铲屎官。","photos":["https://placekitten.com/802/802"],"createdAt":"2025-01-15T00:00:00.000Z"}
-{"name":"小花","gender":"female","status":"fostering","location":"校医院(治疗中)","neutered":true,"personality":"正在治疗耳螨,性格温顺。","photos":["https://placekitten.com/803/803"],"createdAt":"2025-03-01T00:00:00.000Z"}
-{"name":"老白","gender":"male","status":"historical","location":"(已不在校园)","neutered":true,"personality":"CUHK(SZ) 最早的猫之一,2023 年被好心学长领养回家。","photos":["https://placekitten.com/804/804"],"createdAt":"2020-09-01T00:00:00.000Z"}
-```
+## 📮 联系
 
-### 5. 编译预览
-开发者工具里点击「编译」,应该就能跑起来了。
+- 维护者：徐雨彤
+- 邮箱：124090768@link.cuhk.edu.cn
+- GitHub：[Yutong-Xu](https://github.com/Yutong-Xu)
 
-## 迭代 TODO(按优先级)
+---
 
-- [ ] **管理员录入页**:现在录猫只能进数据库后台,做一个 admin 入口页允许白名单微信号上传照片、建档
-- [ ] **点赞**:comments 加 `likes` 字段,猫猫也可以加「今天谁见过」打卡
-- [ ] **地图模式**:首页加一个地图 tab,根据 location 撒点
-- [ ] **登录体系**:`wx.cloud.callFunction` 写个 login 云函数拿 openid,管理员白名单用
-- [ ] **评论审核**:加一个 `reviewed` 字段,敏感词/举报机制
-- [ ] **猫猫历史事件**:status 变化做时间线(例:`current → fostering → current`)
-- [ ] **图片压缩**:上传前 `wx.compressImage`,省流量 + 省存储
-- [ ] **分享卡片**:`onShareAppMessage` 让同学能把某只猫分享到朋友群
-
-## 关键设计说明
-
-- **单表 status 字段驱动四板块**:避免了四张表的冗余,未来加新状态(例如 `lost`)只需加一个枚举值
-- **照片走云存储,DB 只存 fileID**:`wx.cloud.uploadFile` 返回的 fileID 能被 `<image src>` 直接渲染,不用签 URL
-- **评论匿名兜底**:`wx.getUserProfile` 被拒绝时退化为「匿名同学」,不强制登录
-- **没用云函数**:客户端直接 `db.collection().add()` 够了。等需要服务端校验(审核、白名单)再上云函数
+*由热爱猫猫的同学共同维护 ♡*
