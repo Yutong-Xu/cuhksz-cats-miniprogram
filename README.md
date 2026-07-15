@@ -169,8 +169,6 @@ cuhksz-cats/
 
 ## 📮 联系
 
-- 维护者：徐雨彤
-- 邮箱：124090768@link.cuhk.edu.cn
 - GitHub：[Yutong-Xu](https://github.com/Yutong-Xu)
 
 ---
